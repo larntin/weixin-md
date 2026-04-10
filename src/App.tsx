@@ -208,6 +208,7 @@ deploy "$@"
 
 function App() {
   const [markdown, setMarkdown] = useState(SAMPLE_MD);
+  const [dark, setDark] = useState(true);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -235,46 +236,74 @@ function App() {
     : '复制到公众号';
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen" style={dark ? { backgroundColor: '#282c34' } : undefined}>
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shrink-0">
-        <h1 className="text-lg font-semibold text-gray-800">
+      <header className={`flex items-center justify-between px-6 py-3 shrink-0 border-b ${
+        dark ? 'border-gray-700' : 'bg-white border-gray-200'
+      }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
+        <h1 className={`text-lg font-semibold ${dark ? 'text-gray-100' : 'text-gray-800'}`}>
           微信公众号 Markdown 编辑器
         </h1>
-        <button
-          onClick={handleCopy}
-          disabled={!renderedHtml.trim()}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-            copyStatus === 'success'
-              ? 'bg-green-500 text-white'
-              : copyStatus === 'error'
-              ? 'bg-red-500 text-white'
-              : renderedHtml.trim()
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {copyButtonText}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setDark(!dark)}
+            className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors ${
+              dark ? 'text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+            title={dark ? '切换到亮色模式' : '切换到暗色模式'}
+          >
+            {dark ? (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06L5.404 4.343a.75.75 0 1 0-1.06 1.06l1.06 1.061Z" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path fillRule="evenodd" d="M7.455 2.004a.75.75 0 0 1 .26.77 7 7 0 0 0 9.958 7.967.75.75 0 0 1 1.067.853A8.5 8.5 0 1 1 6.647 1.921a.75.75 0 0 1 .808.083Z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+          <button
+            onClick={handleCopy}
+            disabled={!renderedHtml.trim()}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+              copyStatus === 'success'
+                ? 'bg-green-500 text-white'
+                : copyStatus === 'error'
+                ? 'bg-red-500 text-white'
+                : renderedHtml.trim()
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : dark
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {copyButtonText}
+          </button>
+        </div>
       </header>
 
       {/* Editor + Preview */}
       <div className="flex flex-1 min-h-0">
         {/* Editor Panel */}
-        <div className="flex flex-col w-1/2 border-r border-gray-200">
-          <div className="px-4 py-2 text-xs font-medium text-gray-500 bg-gray-100 border-b border-gray-200">
+        <div className={`flex flex-col w-1/2 border-r ${dark ? 'border-gray-600' : 'border-gray-200'}`}>
+          <div className={`px-4 py-2 text-xs font-medium border-b ${
+            dark ? 'text-gray-400 border-gray-600' : 'text-gray-500 bg-gray-100 border-gray-200'
+          }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
             Markdown
           </div>
-          <MarkdownEditor value={markdown} onChange={setMarkdown} />
+          <MarkdownEditor value={markdown} onChange={setMarkdown} dark={dark} />
         </div>
 
         {/* Preview Panel */}
         <div className="flex flex-col w-1/2">
-          <div className="px-4 py-2 text-xs font-medium text-gray-500 bg-gray-100 border-b border-gray-200">
+          <div className={`px-4 py-2 text-xs font-medium border-b ${
+            dark ? 'text-gray-400 border-gray-600' : 'text-gray-500 bg-gray-100 border-gray-200'
+          }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
             预览
           </div>
           <div
-            className="flex-1 p-6 overflow-y-auto bg-white"
+            className={`flex-1 p-6 overflow-y-auto ${dark ? '' : 'bg-white'}`}
+            style={dark ? { backgroundColor: '#282c34' } : undefined}
             dangerouslySetInnerHTML={{ __html: renderedHtml }}
           />
         </div>
