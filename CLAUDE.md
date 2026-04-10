@@ -9,8 +9,9 @@
 - **框架**: React 18 + TypeScript
 - **构建工具**: Vite
 - **样式**: TailwindCSS（用于编辑器 UI），内联 CSS（用于输出内容）
-- **Markdown 解析**: marked / markdown-it
-- **代码高亮**: highlight.js / prism.js
+- **编辑器**: CodeMirror 6（Markdown 语法高亮 + One Dark 主题）
+- **Markdown 解析**: marked（自定义 Renderer 注入内联样式）
+- **代码高亮**: highlight.js（token 级别内联样式，One Dark 配色）
 
 ## 核心架构
 
@@ -92,7 +93,7 @@ async function copyToClipboard(html: string) {
 
 ### 实现策略
 
-1. **Markdown → HTML**: 使用 marked/markdown-it 解析为标准 HTML
+1. **Markdown → HTML**: 使用 marked 自定义 Renderer 解析为 HTML
 2. **主题样式映射**: 为每种 HTML 元素（h1, h2, p, code, blockquote 等）定义对应的 inline style 对象
 3. **渲染时注入**: 在渲染每个元素时，将对应的 style 对象转为 inline style 字符串写入元素
 4. **不使用 CSS class**: 最终输出的 HTML 不依赖任何 class 或外部样式
