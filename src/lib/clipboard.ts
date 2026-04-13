@@ -31,3 +31,17 @@ export async function copyHtmlToClipboard(html: string): Promise<void> {
   selection?.removeAllRanges();
   document.body.removeChild(container);
 }
+
+export function prepareHtmlForCopy(html: string): string {
+  // Replace mermaid placeholders
+  html = html.replace(
+    /<div class="mermaid-placeholder"[^>]*>[\s\S]*?<\/div>/g,
+    '<p style="color: #999; background: #f5f5f5; padding: 12px; text-align: center; border-radius: 4px; margin-bottom: 16px;">【请插入图片：Mermaid 图表】</p>'
+  );
+  // Replace katex block placeholders
+  html = html.replace(
+    /<div class="katex-block"[^>]*>[\s\S]*?<\/div>/g,
+    '<p style="color: #999; background: #f5f5f5; padding: 12px; text-align: center; border-radius: 4px; margin-bottom: 16px;">【请插入图片：数学公式】</p>'
+  );
+  return html;
+}

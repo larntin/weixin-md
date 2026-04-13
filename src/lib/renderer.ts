@@ -4,7 +4,29 @@ import { defaultTheme, cssPropertiesToString } from './theme';
 import type { ThemeStyles } from './theme';
 import { hljsClassToStyle } from './hljs-inline';
 
-export function createWechatRenderer(theme: ThemeStyles = defaultTheme): Renderer {
+let footnoteLinks: { href: string; text: string }[] = [];
+let linkCounter = 0;
+
+export function getFootnoteLinksHtml(): string {
+  if (footnoteLinks.length === 0) return '';
+  const items = footnoteLinks
+    .map(
+      (link, i) =>
+        `<p style="font-size: 12px; color: #999; word-break: break-all; margin-bottom: 4px;">[${i + 1}] ${link.href}</p>`
+    )
+    .join('\n');
+  return `<section style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee;">
+  <p style="font-size: 13px; color: #999; margin-bottom: 8px; font-weight: bold;">参考链接</p>
+  ${items}
+</section>`;
+}
+
+export function resetFootnoteLinks(): void {
+  footnoteLinks = [];
+  linkCounter = 0;
+}
+
+export function createWechatRenderer(theme: ThemeStyles = defaultTheme, linkToFootnote: boolean = false): Renderer {
   const renderer = new Renderer();
 
   // Block-level elements need `this.parser.parseInline(tokens)` to render inline content
@@ -90,6 +112,15 @@ export function createWechatRenderer(theme: ThemeStyles = defaultTheme): Rendere
 
   // Inline elements receive already-parsed text
   renderer.link = ({ href, text }) => {
+    if (linkToFootnote) {
+      if (href.startsWith('#') || href.includes('mp.weixin.qq.com')) {
+        const style = cssPropertiesToString(theme.a);
+        return `<a href="${href}" style="${style}">${text}</a>`;
+      }
+      linkCounter++;
+      footnoteLinks.push({ href, text: String(text) });
+      return `<span>${text}<sup style="color: #576b95; font-size: 12px; margin-left: 2px;">[${linkCounter}]</sup></span>`;
+    }
     const style = cssPropertiesToString(theme.a);
     return `<a href="${href}" style="${style}">${text}</a>`;
   };
@@ -120,6 +151,10 @@ export function createWechatRenderer(theme: ThemeStyles = defaultTheme): Rendere
   };
 
   renderer.code = ({ text, lang }) => {
+    if (lang === 'mermaid') {
+      return `<div class="mermaid-placeholder" data-chart="${btoa(encodeURIComponent(text))}" style="text-align: center; padding: 16px; background: #f5f5f5; border-radius: 6px; margin-bottom: 16px; color: #999;">Mermaid 图表加载中...</div>`;
+    }
+
     const preStyle = cssPropertiesToString(theme.pre);
     const codeStyle = cssPropertiesToString(theme.codeBlock);
 

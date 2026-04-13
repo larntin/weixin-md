@@ -1,7 +1,11 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderMarkdown } from './lib/markdown';
-import { copyHtmlToClipboard } from './lib/clipboard';
+import { copyHtmlToClipboard, prepareHtmlForCopy } from './lib/clipboard';
 import { MarkdownEditor } from './components/MarkdownEditor';
+import { PreviewToolbar } from './components/PreviewToolbar';
+import { MermaidBlock } from './components/MermaidBlock';
+import { KatexBlock } from './components/KatexBlock';
 
 const SAMPLE_MD = `# 微信公众号 Markdown 编辑器
 
@@ -204,23 +208,62 @@ deploy "$@"
 ---
 
 *斜体文字* 和 **加粗文字** 以及 ~~删除线~~ 混合排版测试。
+
+## Mermaid 图表
+
+\`\`\`mermaid
+graph LR
+    A[Markdown] --> B[marked 解析]
+    B --> C[内联样式 HTML]
+    C --> D[预览]
+    D --> E[复制到公众号]
+\`\`\`
+
+## 数学公式
+
+行内公式：$E = mc^2$
+
+块级公式：
+
+$$
+\\sum_{i=1}^{n} x_i = x_1 + x_2 + \\cdots + x_n
+$$
+
+## 脚注
+
+这是一段带脚注的文字[^1]。
+
+[^1]: 这是脚注的内容。
+
+## 注音
+
+{漢字}(hànzì) 是中国文字。
 `;
 
 function App() {
   const [markdown, setMarkdown] = useState(SAMPLE_MD);
   const [dark, setDark] = useState(true);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [themeId, setThemeId] = useState('default');
+  const [paletteId, setPaletteId] = useState('blue');
+  const [linkToFootnote, setLinkToFootnote] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const renderedHtml = useMemo(() => {
     if (!markdown.trim()) return '';
-    return renderMarkdown(markdown);
+    return renderMarkdown(markdown, themeId, paletteId, linkToFootnote);
+  }, [markdown, themeId, paletteId, linkToFootnote]);
+
+  const hasUncopiableContent = useMemo(() => {
+    return /```mermaid/i.test(markdown) || /\$\$\n[\s\S]+?\n\$\$/m.test(markdown);
   }, [markdown]);
 
   const handleCopy = useCallback(async () => {
     if (!renderedHtml.trim()) return;
     try {
-      await copyHtmlToClipboard(renderedHtml);
+      const prepared = prepareHtmlForCopy(renderedHtml);
+      await copyHtmlToClipboard(prepared);
       setCopyStatus('success');
     } catch {
       setCopyStatus('error');
@@ -229,64 +272,79 @@ function App() {
     timerRef.current = setTimeout(() => setCopyStatus('idle'), 2000);
   }, [renderedHtml]);
 
-  const copyButtonText = copyStatus === 'success'
-    ? '已复制!'
-    : copyStatus === 'error'
-    ? '复制失败'
-    : '复制到公众号';
+  // Mount MermaidBlock and KatexBlock into placeholder divs via DOM
+  useEffect(() => {
+    const container = previewRef.current;
+    if (!container) return;
+
+    const roots: { root: ReturnType<typeof createRoot>; wrapper: HTMLElement }[] = [];
+
+    container.querySelectorAll('.mermaid-placeholder').forEach((el) => {
+      const chart = el.getAttribute('data-chart') || '';
+      const wrapper = document.createElement('div');
+      el.textContent = '';
+      el.appendChild(wrapper);
+      const root = createRoot(wrapper);
+      root.render(<MermaidBlock chart={chart} />);
+      roots.push({ root, wrapper });
+    });
+
+    container.querySelectorAll('.katex-block').forEach((el) => {
+      const tex = el.getAttribute('data-katex') || '';
+      const wrapper = document.createElement('div');
+      el.textContent = '';
+      el.appendChild(wrapper);
+      const root = createRoot(wrapper);
+      root.render(<KatexBlock katex={tex} />);
+      roots.push({ root, wrapper });
+    });
+
+    return () => roots.forEach(({ root }) => root.unmount());
+  }, [renderedHtml]);
 
   return (
-    <div className="flex flex-col h-screen" style={dark ? { backgroundColor: '#282c34' } : undefined}>
+    <div className="flex flex-col h-screen overflow-hidden" style={dark ? { backgroundColor: '#282c34' } : undefined}>
       {/* Header */}
       <header className={`flex items-center justify-between px-6 py-3 shrink-0 border-b ${
         dark ? 'border-gray-700' : 'bg-white border-gray-200'
       }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
-        <h1 className={`text-lg font-semibold ${dark ? 'text-gray-100' : 'text-gray-800'}`}>
-          微信公众号 Markdown 编辑器
-        </h1>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setDark(!dark)}
-            className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors ${
-              dark ? 'text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-            title={dark ? '切换到亮色模式' : '切换到暗色模式'}
-          >
-            {dark ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06L5.404 4.343a.75.75 0 1 0-1.06 1.06l1.06 1.061Z" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path fillRule="evenodd" d="M7.455 2.004a.75.75 0 0 1 .26.77 7 7 0 0 0 9.958 7.967.75.75 0 0 1 1.067.853A8.5 8.5 0 1 1 6.647 1.921a.75.75 0 0 1 .808.083Z" clipRule="evenodd" />
-              </svg>
-            )}
-          </button>
-          <button
-            onClick={handleCopy}
-            disabled={!renderedHtml.trim()}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-              copyStatus === 'success'
-                ? 'bg-green-500 text-white'
-                : copyStatus === 'error'
-                ? 'bg-red-500 text-white'
-                : renderedHtml.trim()
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : dark
-                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {copyButtonText}
-          </button>
+          <h1 className={`text-lg font-semibold ${dark ? 'text-gray-100' : 'text-gray-800'}`}>
+            微信公众号 Markdown 编辑器
+          </h1>
+          {hasUncopiableContent && (
+            <span
+              title="文档包含图表或公式，复制后需手动下载图片并插入到公众号编辑器"
+              className="text-orange-400 cursor-help text-lg"
+            >
+              ⚠
+            </span>
+          )}
         </div>
+        <button
+          onClick={() => setDark(!dark)}
+          className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors ${
+            dark ? 'text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+          title={dark ? '切换到亮色模式' : '切换到暗色模式'}
+        >
+          {dark ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06L5.404 4.343a.75.75 0 1 0-1.06 1.06l1.06 1.061Z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <path fillRule="evenodd" d="M7.455 2.004a.75.75 0 0 1 .26.77 7 7 0 0 0 9.958 7.967.75.75 0 0 1 1.067.853A8.5 8.5 0 1 1 6.647 1.921a.75.75 0 0 1 .808.083Z" clipRule="evenodd" />
+            </svg>
+          )}
+        </button>
       </header>
 
       {/* Editor + Preview */}
       <div className="flex flex-1 min-h-0">
         {/* Editor Panel */}
-        <div className={`flex flex-col w-1/2 border-r ${dark ? 'border-gray-600' : 'border-gray-200'}`}>
-          <div className={`px-4 py-2 text-xs font-medium border-b ${
+        <div className={`flex flex-col w-1/2 min-h-0 border-r ${dark ? 'border-gray-600' : 'border-gray-200'}`}>
+          <div className={`flex items-center h-9 px-4 text-xs font-medium border-b shrink-0 ${
             dark ? 'text-gray-400 border-gray-600' : 'text-gray-500 bg-gray-100 border-gray-200'
           }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
             Markdown
@@ -295,15 +353,27 @@ function App() {
         </div>
 
         {/* Preview Panel */}
-        <div className="flex flex-col w-1/2">
-          <div className={`px-4 py-2 text-xs font-medium border-b ${
+        <div className="flex flex-col w-1/2 min-h-0">
+          <div className={`flex items-center justify-between h-9 px-4 text-xs font-medium border-b shrink-0 ${
             dark ? 'text-gray-400 border-gray-600' : 'text-gray-500 bg-gray-100 border-gray-200'
           }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
-            预览
+            <span>预览</span>
+            <PreviewToolbar
+              themeId={themeId}
+              paletteId={paletteId}
+              linkToFootnote={linkToFootnote}
+              onThemeChange={setThemeId}
+              onPaletteChange={setPaletteId}
+              onLinkToFootnoteChange={setLinkToFootnote}
+              onCopy={handleCopy}
+              copyStatus={copyStatus}
+              disabled={!renderedHtml.trim()}
+              dark={dark}
+            />
           </div>
           <div
-            className={`flex-1 p-6 overflow-y-auto ${dark ? '' : 'bg-white'}`}
-            style={dark ? { backgroundColor: '#282c34' } : undefined}
+            ref={previewRef}
+            className="flex-1 p-6 overflow-y-auto bg-white"
             dangerouslySetInnerHTML={{ __html: renderedHtml }}
           />
         </div>

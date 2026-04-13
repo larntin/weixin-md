@@ -1,13 +1,50 @@
 import { marked } from 'marked';
-import { createWechatRenderer } from './renderer';
-import type { ThemeStyles } from './theme';
-import { defaultTheme } from './theme';
+import { createWechatRenderer, getFootnoteLinksHtml, resetFootnoteLinks } from './renderer';
+import { buildTheme } from './theme';
+import {
+  katexInlineExtension,
+  katexBlockExtension,
+  footnoteRefExtension,
+  footnoteDefExtension,
+  rubyTextExtension,
+  getFootnotesHtml,
+  resetFootnotes,
+} from './extensions';
+
+// Register extensions once
+marked.use({
+  extensions: [
+    katexBlockExtension,
+    katexInlineExtension,
+    footnoteDefExtension,
+    footnoteRefExtension,
+    rubyTextExtension,
+  ],
+});
 
 export function renderMarkdown(
   markdown: string,
-  theme: ThemeStyles = defaultTheme
+  themeId: string = 'default',
+  paletteId: string = 'blue',
+  linkToFootnote: boolean = true
 ): string {
-  const renderer = createWechatRenderer(theme);
+  // Reset state
+  resetFootnoteLinks();
+  resetFootnotes();
+
+  const theme = buildTheme(themeId, paletteId);
+  const renderer = createWechatRenderer(theme, linkToFootnote);
   marked.setOptions({ renderer, breaks: true, gfm: true });
-  return marked.parse(markdown) as string;
+
+  let html = marked.parse(markdown) as string;
+
+  // Append footnotes section
+  const footnotesHtml = getFootnotesHtml();
+  if (footnotesHtml) html += footnotesHtml;
+
+  // Append link references section
+  const linksHtml = getFootnoteLinksHtml();
+  if (linksHtml) html += linksHtml;
+
+  return html;
 }

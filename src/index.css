@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-body {
+html, body, #root {
   margin: 0;
+  padding: 0;
+  height: 100% !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
   font-family: system-ui, -apple-system, sans-serif;
-}
-
-#root {
-  height: 100vh;
 }
