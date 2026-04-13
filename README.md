@@ -1,5 +1,7 @@
 # 微信公众号 Markdown 编辑器
 
+<a href="https://larntin.github.io/weixin-md/" target="_blank">在线使用</a>
+
 一个本地运行的 Markdown 编辑器，将 Markdown 渲染为微信公众号兼容的富文本，一键复制后可直接粘贴到微信公众号编辑器中并保留排版样式。
 
 ## 功能
