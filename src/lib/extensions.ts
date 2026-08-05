@@ -112,7 +112,7 @@ export const footnoteRefExtension: TokenizerAndRendererExtension = {
       footnoteCounter++;
       footnoteMap.set(label, { index: footnoteCounter, content: '' });
     }
-    return `<sup style="color: #576b95; font-size: 12px;">[${index}]</sup>`;
+    return `<sup data-footnote-ref style="color: #576b95; font-size: 12px; display: inline-block; white-space: nowrap; vertical-align: super;">[${index}]</sup>`;
   },
 };
 

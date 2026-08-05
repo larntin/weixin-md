@@ -4,6 +4,7 @@ import { renderMarkdown } from './lib/markdown';
 import { copyHtmlToClipboard, prepareHtmlForCopy } from './lib/clipboard';
 import { MarkdownEditor } from './components/MarkdownEditor';
 import { PreviewToolbar } from './components/PreviewToolbar';
+import { StyleSidebar, type StylePreset } from './components/StyleSidebar';
 import { MermaidBlock } from './components/MermaidBlock';
 import { KatexBlock } from './components/KatexBlock';
 
@@ -240,24 +241,39 @@ $$
 {漢字}(hànzì) 是中国文字。
 `;
 
+const STYLE_PRESETS: StylePreset[] = [
+  { id: 'warm-sun', name: '暖阳', enName: 'Warm Sun', accent: '#D98E4F' },
+  { id: 'ink', name: '素笺', enName: 'Ink', accent: '#B23A2E' },
+  { id: 'fresh', name: '清露', enName: 'Fresh', accent: '#1F9E8E' },
+];
+
 function App() {
   const [markdown, setMarkdown] = useState(SAMPLE_MD);
-  const [dark, setDark] = useState(true);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [themeId, setThemeId] = useState('default');
-  const [paletteId, setPaletteId] = useState('blue');
+  const [themeId, setThemeId] = useState('warm-sun');
   const [linkToFootnote, setLinkToFootnote] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const previewRef = useRef<HTMLDivElement>(null);
 
+  // 主题模式：亮色 / 深色 / 跟随系统
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('system');
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  const dark = themeMode === 'dark' || (themeMode === 'system' && systemDark);
+
   const renderedHtml = useMemo(() => {
     if (!markdown.trim()) return '';
-    return renderMarkdown(markdown, themeId, paletteId, linkToFootnote);
-  }, [markdown, themeId, paletteId, linkToFootnote]);
-
-  const hasUncopiableContent = useMemo(() => {
-    return /```mermaid/i.test(markdown) || /\$\$\n[\s\S]+?\n\$\$/m.test(markdown);
-  }, [markdown]);
+    return renderMarkdown(markdown, themeId, 'blue', linkToFootnote);
+  }, [markdown, themeId, linkToFootnote]);
 
   const handleCopy = useCallback(async () => {
     if (!renderedHtml.trim()) return;
@@ -303,67 +319,104 @@ function App() {
   }, [renderedHtml]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={dark ? { backgroundColor: '#282c34' } : undefined}>
+    <div className="flex flex-col h-screen overflow-hidden lg:overflow-hidden" style={dark ? { backgroundColor: '#282c34' } : undefined}>
       {/* Header */}
-      <header className={`flex items-center justify-between px-6 py-3 shrink-0 border-b ${
+      <header className={`flex items-center justify-between px-6 py-[7px] lg:py-3 shrink-0 border-b ${
         dark ? 'border-gray-700' : 'bg-white border-gray-200'
       }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
         <div className="flex items-center gap-3">
           <h1 className={`text-lg font-semibold ${dark ? 'text-gray-100' : 'text-gray-800'}`}>
-            微信公众号 Markdown 编辑器
+            武汉醉鱼 - 微信公众号MD样式
           </h1>
-          {hasUncopiableContent && (
-            <span
-              title="文档包含图表或公式，复制后需手动下载图片并插入到公众号编辑器"
-              className="text-orange-400 cursor-help text-lg"
-            >
-              ⚠
-            </span>
-          )}
         </div>
         <button
-          onClick={() => setDark(!dark)}
+          onClick={() =>
+            setThemeMode((m) => (m === 'light' ? 'dark' : m === 'dark' ? 'system' : 'light'))
+          }
           className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors ${
             dark ? 'text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
-          title={dark ? '切换到亮色模式' : '切换到暗色模式'}
+          title={
+            themeMode === 'light'
+              ? '当前：亮色（点击切换）'
+              : themeMode === 'dark'
+              ? '当前：深色（点击切换）'
+              : '当前：跟随系统（点击切换）'
+          }
         >
-          {dark ? (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.061-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06L5.404 4.343a.75.75 0 1 0-1.06 1.06l1.06 1.061Z" />
+          {themeMode === 'light' ? (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+            </svg>
+          ) : themeMode === 'dark' ? (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path fillRule="evenodd" d="M7.455 2.004a.75.75 0 0 1 .26.77 7 7 0 0 0 9.958 7.967.75.75 0 0 1 1.067.853A8.5 8.5 0 1 1 6.647 1.921a.75.75 0 0 1 .808.083Z" clipRule="evenodd" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m-9-1.5V6a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3Z" />
             </svg>
           )}
         </button>
       </header>
 
-      {/* Editor + Preview */}
-      <div className="flex flex-1 min-h-0">
+      {/* 可滚动内容区：H5 整区滚动（样式栏+编辑器+预览），PC 由内部面板各自滚动 */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden">
+
+        {/* H5：横向滑动样式选择栏（窄屏显示） */}
+        <StyleSidebar
+          variant="horizontal"
+          presets={STYLE_PRESETS}
+          selectedId={themeId}
+          onSelect={setThemeId}
+          dark={dark}
+          className="lg:hidden"
+        />
+
+        {/* 主体：PC 三栏（竖向样式栏 + 编辑器 + 预览），H5 纵向堆叠 */}
+        <div className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0">
+        {/* PC：竖向样式栏（宽屏显示） */}
+        <StyleSidebar
+          variant="vertical"
+          presets={STYLE_PRESETS}
+          selectedId={themeId}
+          onSelect={setThemeId}
+          dark={dark}
+          className="hidden lg:flex"
+        />
+
         {/* Editor Panel */}
-        <div className={`flex flex-col w-1/2 min-h-0 border-r ${dark ? 'border-gray-600' : 'border-gray-200'}`}>
-          <div className={`flex items-center h-9 px-4 text-xs font-medium border-b shrink-0 ${
+        <div
+          className={`flex flex-col h-[500px] border-b lg:h-auto lg:flex-1 lg:min-h-0 lg:min-w-0 lg:border-b-0 lg:border-r ${
+            dark ? 'border-gray-600' : 'border-gray-200'
+          }`}
+        >
+          <div className={`flex items-center justify-between h-9 px-4 text-xs font-medium border-b shrink-0 ${
             dark ? 'text-gray-400 border-gray-600' : 'text-gray-500 bg-gray-100 border-gray-200'
           }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
-            Markdown
+            <span>Markdown</span>
+            <button
+              type="button"
+              onClick={() => setMarkdown('')}
+              className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
+                dark ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200'
+              }`}
+              title="清空编辑器内容"
+            >
+              清空
+            </button>
           </div>
           <MarkdownEditor value={markdown} onChange={setMarkdown} dark={dark} />
         </div>
 
         {/* Preview Panel */}
-        <div className="flex flex-col w-1/2 min-h-0">
+        <div className="flex flex-col min-h-0 lg:flex-1 lg:min-w-0">
           <div className={`flex items-center justify-between h-9 px-4 text-xs font-medium border-b shrink-0 ${
             dark ? 'text-gray-400 border-gray-600' : 'text-gray-500 bg-gray-100 border-gray-200'
           }`} style={dark ? { backgroundColor: '#282c34' } : undefined}>
             <span>预览</span>
             <PreviewToolbar
-              themeId={themeId}
-              paletteId={paletteId}
               linkToFootnote={linkToFootnote}
-              onThemeChange={setThemeId}
-              onPaletteChange={setPaletteId}
               onLinkToFootnoteChange={setLinkToFootnote}
               onCopy={handleCopy}
               copyStatus={copyStatus}
@@ -373,13 +426,14 @@ function App() {
           </div>
           <div
             ref={previewRef}
-            className="flex-1 p-6 overflow-y-auto bg-white"
+            className="p-6 bg-white lg:flex-1 lg:overflow-y-auto"
             dangerouslySetInnerHTML={{ __html: renderedHtml }}
           />
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 export default App;

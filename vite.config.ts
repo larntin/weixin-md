@@ -6,4 +6,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: '/weixin-md/',
   plugins: [react(), tailwindcss()],
+  server: {
+    port: 5801,
+    host: '127.0.0.1',
+  },
 })

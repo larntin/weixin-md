@@ -1,4 +1,7 @@
 import type { CSSProperties } from 'react';
+import { warmSunTheme } from './theme-warm-sun';
+import { inkTheme } from './theme-ink';
+import { freshTheme } from './theme-fresh';
 
 export type ThemeStyles = {
   h1: CSSProperties;
@@ -831,6 +834,9 @@ export const themeList: ThemeDefinition[] = [
   { id: 'grace', name: '优雅', styles: graceTheme },
   { id: 'simple', name: '极简', styles: simpleTheme },
   { id: 'modern', name: '现代', styles: modernTheme },
+  { id: 'warm-sun', name: '暖阳', styles: warmSunTheme },
+  { id: 'ink', name: '素笺', styles: inkTheme },
+  { id: 'fresh', name: '清露', styles: freshTheme },
 ];
 
 // ─── Color Palettes ─────────────────────────────────────────────────
@@ -857,11 +863,18 @@ function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
 
+// 暖阳 / 素笺 / 清露 自带完整配色，跳过调色板注入
+const SELF_CONTAINED_THEMES = new Set(['warm-sun', 'ink', 'fresh']);
+
 export function buildTheme(themeId: string, paletteId: string): ThemeStyles {
   const themeDef = themeList.find((t) => t.id === themeId) ?? themeList[0];
-  const palette = paletteList.find((p) => p.id === paletteId) ?? paletteList[0];
-
   const styles = deepClone(themeDef.styles);
+
+  if (SELF_CONTAINED_THEMES.has(themeDef.id)) {
+    return styles;
+  }
+
+  const palette = paletteList.find((p) => p.id === paletteId) ?? paletteList[0];
 
   // h2: apply palette color to background (modern) or border/color
   if (themeDef.id === 'modern') {

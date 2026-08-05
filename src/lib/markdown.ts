@@ -38,6 +38,9 @@ export function renderMarkdown(
 
   let html = marked.parse(markdown) as string;
 
+  // marked 的 inline extension 会在自定义 token 前误插入 <br>，清理注脚前的换行
+  html = html.replace(/<br>\s*<sup data-footnote-ref/g, '<sup data-footnote-ref');
+
   // Append footnotes section
   const footnotesHtml = getFootnotesHtml();
   if (footnotesHtml) html += footnotesHtml;
