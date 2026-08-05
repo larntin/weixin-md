@@ -361,8 +361,6 @@ const graceTheme: ThemeStyles = {
     marginBottom: '18px',
     fontSize: '14px',
     lineHeight: '1.7',
-    borderRadius: '6px',
-    overflow: 'hidden' as const,
   },
   thead: {
     backgroundColor: '#f5f5f5',
@@ -745,8 +743,6 @@ const modernTheme: ThemeStyles = {
     marginBottom: '18px',
     fontSize: '14px',
     lineHeight: '1.7',
-    borderRadius: '12px',
-    overflow: 'hidden' as const,
     border: '1px solid #e5e5e5',
   },
   thead: {

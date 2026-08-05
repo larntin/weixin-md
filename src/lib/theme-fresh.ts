@@ -19,7 +19,7 @@ export const freshTheme: ThemeStyles = {
   ul: { listStyleType: 'disc', paddingLeft: '24px', marginTop: '0px', marginBottom: '18px', fontSize: '16px', lineHeight: '1.8', color: '#3F4A53' },
   ol: { listStyleType: 'decimal', paddingLeft: '24px', marginTop: '0px', marginBottom: '18px', fontSize: '16px', lineHeight: '1.8', color: '#3F4A53' },
   li: { marginBottom: '6px', lineHeight: '1.8' },
-  table: { borderCollapse: 'collapse' as const, width: '100%', marginTop: '0px', marginBottom: '18px', fontSize: '14px', lineHeight: '1.7', borderRadius: '12px', overflow: 'hidden' as const },
+  table: { borderCollapse: 'collapse' as const, width: '100%', marginTop: '0px', marginBottom: '18px', fontSize: '14px', lineHeight: '1.7' },
   thead: { backgroundColor: '#E3F2EF' },
   th: { border: '1px solid #CDE5E0', padding: '10px 14px', fontWeight: '700', textAlign: 'left' as const, color: '#28323A' },
   td: { border: '1px solid #CDE5E0', padding: '10px 14px', textAlign: 'left' as const, color: '#3F4A53' },

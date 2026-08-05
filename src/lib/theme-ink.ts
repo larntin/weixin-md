@@ -19,7 +19,7 @@ export const inkTheme: ThemeStyles = {
   ul: { listStyleType: 'disc', paddingLeft: '24px', marginTop: '0px', marginBottom: '20px', fontSize: '16px', lineHeight: '1.85', color: '#4A4339' },
   ol: { listStyleType: 'decimal', paddingLeft: '24px', marginTop: '0px', marginBottom: '20px', fontSize: '16px', lineHeight: '1.85', color: '#4A4339' },
   li: { marginBottom: '6px', lineHeight: '1.85' },
-  table: { borderCollapse: 'collapse' as const, width: '100%', marginTop: '0px', marginBottom: '20px', fontSize: '14px', lineHeight: '1.7', borderRadius: '4px', overflow: 'hidden' as const },
+  table: { borderCollapse: 'collapse' as const, width: '100%', marginTop: '0px', marginBottom: '20px', fontSize: '14px', lineHeight: '1.7' },
   thead: { backgroundColor: '#F6E4DE' },
   th: { border: '1px solid #E5DCD2', padding: '10px 14px', fontWeight: '700', textAlign: 'left' as const, color: '#2B2620' },
   td: { border: '1px solid #E5DCD2', padding: '10px 14px', textAlign: 'left' as const, color: '#4A4339' },

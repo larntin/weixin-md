@@ -18,7 +18,7 @@ export const warmSunTheme: ThemeStyles = {
   ul: { listStyleType: 'disc', paddingLeft: '24px', marginTop: '0px', marginBottom: '18px', fontSize: '16px', lineHeight: '1.8', color: '#5B5249' },
   ol: { listStyleType: 'decimal', paddingLeft: '24px', marginTop: '0px', marginBottom: '18px', fontSize: '16px', lineHeight: '1.8', color: '#5B5249' },
   li: { marginBottom: '6px', lineHeight: '1.8' },
-  table: { borderCollapse: 'collapse' as const, width: '100%', marginTop: '0px', marginBottom: '18px', fontSize: '14px', lineHeight: '1.7', borderRadius: '10px', overflow: 'hidden' as const },
+  table: { borderCollapse: 'collapse' as const, width: '100%', marginTop: '0px', marginBottom: '18px', fontSize: '14px', lineHeight: '1.7' },
   thead: { backgroundColor: '#FBEBDD' },
   th: { border: '1px solid #E8D9C6', padding: '10px 14px', fontWeight: '700', textAlign: 'left' as const, color: '#3A332B' },
   td: { border: '1px solid #E8D9C6', padding: '10px 14px', textAlign: 'left' as const, color: '#5B5249' },
